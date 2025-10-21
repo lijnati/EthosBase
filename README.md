@@ -31,7 +31,7 @@ EthosBase built on Base Chain. Users accumulate reputation scores based on their
 | Community | 20% | Governance participation, contributions |
 | Flash Loans | 15% | Proper usage vs abuse |
 
-## 🏗️ Architecture
+<!-- ## 🏗️ Architecture
 
 ```
 ReputationSystem.sol          # Core reputation tracking and scoring
@@ -121,7 +121,7 @@ npm run verify-deployment
 - Max loan: 1,000,000 tokens
 - Collateral ratio: 105%
 - Interest discount: 2%
-- Exclusive pools: ✅
+- Exclusive pools: ✅ -->
 
 <!-- ## 🔧 Integration Guide
 
