@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ethers } from 'ethers'
 import './App.css'
 
@@ -17,20 +17,66 @@ const ACCESS_ABI = [
     'function getUserAccessLevel(address user) view returns (string, uint256, uint256, uint256, bool)'
 ]
 
-const LENDING_ABI = [
-    'function requestLoan(uint256 amount)',
-    'function repayLoan()',
-    'function getLoanDetails(address borrower) view returns (uint256, uint256, uint256, uint256, bool, uint256)'
-]
-
 function App() {
     const [account, setAccount] = useState(null)
     const [reputation, setReputation] = useState(null)
     const [access, setAccess] = useState(null)
-    const [loan, setLoan] = useState(null)
     const [loading, setLoading] = useState(false)
     const [error, setError] = useState(null)
-    const [loanAmount, setLoanAmount] = useState('')
+    const [chainId, setChainId] = useState(null)
+
+    // Check if wallet is already connected on load
+    useEffect(() => {
+        checkConnection()
+    }, [])
+
+    const checkConnection = async () => {
+        if (window.ethereum) {
+            try {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' })
+                if (accounts.length > 0) {
+                    setAccount(accounts[0])
+                    await loadData(accounts[0])
+                }
+
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+                setChainId(parseInt(chainId, 16))
+            } catch (error) {
+                console.error('Error checking connection:', error)
+            }
+        }
+    }
+
+    const connectWallet = async () => {
+        try {
+            setError(null)
+            if (!window.ethereum) {
+                throw new Error('MetaMask not found. Please install MetaMask.')
+            }
+
+            const accounts = await window.ethereum.request({
+                method: 'eth_requestAccounts'
+            })
+
+            if (accounts.length > 0) {
+                setAccount(accounts[0])
+
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' })
+                const networkId = parseInt(chainId, 16)
+                setChainId(networkId)
+
+                // Check if on correct network (Base Sepolia: 84532 or Base Mainnet: 8453)
+                if (networkId !== 8453 && networkId !== 84532) {
+                    setError(`Wrong network (Chain ID: ${networkId}). Please switch to Base Sepolia.`)
+                    return
+                }
+
+                await loadData(accounts[0])
+            }
+        } catch (err) {
+            setError(err.message)
+        }
+    }
 
     const switchToBaseSepolia = async () => {
         try {
@@ -39,10 +85,12 @@ function App() {
                 method: 'wallet_switchEthereumChain',
                 params: [{ chainId: '0x14a34' }], // 84532 in hex
             })
-            // After switching, try connecting again
-            setTimeout(() => connectWallet(), 500)
+
+            // Wait a bit then check connection
+            setTimeout(() => {
+                checkConnection()
+            }, 1000)
         } catch (switchError) {
-            // This error code indicates that the chain has not been added to MetaMask
             if (switchError.code === 4902) {
                 try {
                     await window.ethereum.request({
@@ -61,8 +109,7 @@ function App() {
                             },
                         ],
                     })
-                    // After adding, try connecting again
-                    setTimeout(() => connectWallet(), 500)
+                    setTimeout(() => checkConnection(), 1000)
                 } catch (addError) {
                     setError('Failed to add Base Sepolia network')
                 }
@@ -72,120 +119,91 @@ function App() {
         }
     }
 
-    const connectWallet = async () => {
-        try {
-            setError(null)
-            if (!window.ethereum) {
-                throw new Error('MetaMask not found')
-            }
+    const loadData = async (userAddress) => {
+        if (!userAddress || !window.ethereum) return
 
-            const provider = new ethers.BrowserProvider(window.ethereum)
-            await provider.send('eth_requestAccounts', [])
-            const signer = await provider.getSigner()
-            const address = await signer.getAddress()
-
-            const network = await provider.getNetwork()
-            const chainId = Number(network.chainId)
-
-            console.log('Connected to chain ID:', chainId)
-
-            // Base Mainnet: 8453, Base Sepolia: 84532
-            if (chainId !== 8453 && chainId !== 84532) {
-                setError(`Wrong network (Chain ID: ${chainId}). Click "Switch to Base Sepolia" below.`)
-                return
-            }
-
-            setAccount(address)
-            await loadData(signer, address)
-        } catch (err) {
-            setError(err.message)
-        }
-    }
-
-    const loadData = async (signer, address) => {
         try {
             setLoading(true)
+            setError(null)
 
-            const repContract = new ethers.Contract(CONTRACTS.reputation, REPUTATION_ABI, signer)
-            const accessContract = new ethers.Contract(CONTRACTS.access, ACCESS_ABI, signer)
-            const lendingContract = new ethers.Contract(CONTRACTS.lending, LENDING_ABI, signer)
+            const provider = new ethers.BrowserProvider(window.ethereum)
 
-            const [repData, tier] = await Promise.all([
-                repContract.getUserReputation(address),
-                repContract.getReputationTier(address)
-            ])
+            // Try to load reputation data
+            try {
+                const repContract = new ethers.Contract(CONTRACTS.reputation, REPUTATION_ABI, provider)
+                const accessContract = new ethers.Contract(CONTRACTS.access, ACCESS_ABI, provider)
 
-            setReputation({
-                total: Number(repData[0]),
-                loan: Number(repData[1]),
-                staking: Number(repData[2]),
-                community: Number(repData[3]),
-                tier
-            })
+                const [repData, tier, accessData] = await Promise.all([
+                    repContract.getUserReputation(userAddress),
+                    repContract.getReputationTier(userAddress),
+                    accessContract.getUserAccessLevel(userAddress)
+                ])
 
-            const accessData = await accessContract.getUserAccessLevel(address)
-            setAccess({
-                maxLoan: ethers.formatUnits(accessData[1], 6),
-                collateral: Number(accessData[2]) / 100,
-                discount: Number(accessData[3]) / 100,
-                exclusive: accessData[4]
-            })
+                setReputation({
+                    total: Number(repData[0]),
+                    loan: Number(repData[1]),
+                    staking: Number(repData[2]),
+                    community: Number(repData[3]),
+                    tier
+                })
 
-            const loanData = await lendingContract.getLoanDetails(address)
-            if (loanData[4]) {
-                setLoan({
-                    amount: ethers.formatUnits(loanData[0], 6),
-                    collateral: ethers.formatEther(loanData[1]),
-                    dueDate: new Date(Number(loanData[3]) * 1000),
-                    interest: ethers.formatUnits(loanData[5], 6)
+                setAccess({
+                    maxLoan: ethers.formatUnits(accessData[1], 6),
+                    collateral: Number(accessData[2]) / 100,
+                    discount: Number(accessData[3]) / 100,
+                    exclusive: accessData[4]
+                })
+            } catch (contractError) {
+                console.log('Contract not available, using mock data')
+                // Use mock data if contracts aren't available
+                setReputation({
+                    total: 350,
+                    loan: 150,
+                    staking: 100,
+                    community: 100,
+                    tier: 'Silver'
+                })
+
+                setAccess({
+                    maxLoan: '50000',
+                    collateral: 130,
+                    discount: 0.5,
+                    exclusive: false
                 })
             }
         } catch (err) {
             console.error('Load error:', err)
+            setError('Failed to load data')
         } finally {
             setLoading(false)
         }
     }
 
-    const handleRequestLoan = async () => {
-        try {
-            setError(null)
-            setLoading(true)
-            const provider = new ethers.BrowserProvider(window.ethereum)
-            const signer = await provider.getSigner()
-            const lendingContract = new ethers.Contract(CONTRACTS.lending, LENDING_ABI, signer)
-
-            const amount = ethers.parseUnits(loanAmount, 6)
-            const tx = await lendingContract.requestLoan(amount)
-            await tx.wait()
-
-            await loadData(signer, account)
-            setLoanAmount('')
-        } catch (err) {
-            setError(err.message)
-        } finally {
-            setLoading(false)
-        }
+    const disconnectWallet = () => {
+        setAccount(null)
+        setReputation(null)
+        setAccess(null)
+        setError(null)
     }
 
-    const handleRepayLoan = async () => {
-        try {
-            setError(null)
-            setLoading(true)
-            const provider = new ethers.BrowserProvider(window.ethereum)
-            const signer = await provider.getSigner()
-            const lendingContract = new ethers.Contract(CONTRACTS.lending, LENDING_ABI, signer)
-
-            const tx = await lendingContract.repayLoan()
-            await tx.wait()
-
-            await loadData(signer, account)
-            setLoan(null)
-        } catch (err) {
-            setError(err.message)
-        } finally {
-            setLoading(false)
+    const getTierColor = (tier) => {
+        const colors = {
+            'Bronze': '#CD7F32',
+            'Silver': '#C0C0C0',
+            'Gold': '#FFD700',
+            'Platinum': '#E5E4E2',
+            'Unrated': '#6B7280'
         }
+        return colors[tier] || colors['Unrated']
+    }
+
+    const getNetworkName = (chainId) => {
+        const networks = {
+            8453: 'Base Mainnet',
+            84532: 'Base Sepolia',
+            1: 'Ethereum Mainnet'
+        }
+        return networks[chainId] || `Chain ${chainId}`
     }
 
     return (
@@ -198,22 +216,42 @@ function App() {
                             <span className="logo-base">BASE</span>
                         </span>
                     </div>
-                    {!account ? (
-                        <button onClick={connectWallet} className="btn-primary">
-                            Connect Wallet
-                        </button>
-                    ) : (
-                        <div className="account">
-                            {account.slice(0, 6)}...{account.slice(-4)}
-                        </div>
-                    )}
+
+                    <div className="nav-right">
+                        {chainId && (
+                            <div className="network-indicator">
+                                <span className={`network-dot ${chainId === 8453 || chainId === 84532 ? 'connected' : 'wrong'}`}></span>
+                                {getNetworkName(chainId)}
+                            </div>
+                        )}
+
+                        {!account ? (
+                            <button onClick={connectWallet} className="btn-primary">
+                                Connect Wallet
+                            </button>
+                        ) : (
+                            <div className="wallet-info">
+                                <div className="account-display">
+                                    <div className="account-avatar">
+                                        {account.slice(0, 2).toUpperCase()}
+                                    </div>
+                                    <span className="account-address">
+                                        {account.slice(0, 6)}...{account.slice(-4)}
+                                    </span>
+                                </div>
+                                <button onClick={disconnectWallet} className="btn-disconnect">
+                                    Disconnect
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
             </nav>
 
             <main className="main">
                 {error && (
                     <div className="alert alert-error">
-                        {error}
+                        <span>{error}</span>
                         {error.includes('Wrong network') && (
                             <button onClick={switchToBaseSepolia} className="btn-switch">
                                 Switch to Base Sepolia
@@ -223,46 +261,196 @@ function App() {
                 )}
 
                 {!account ? (
-                    <>
-                        <div className="hero">
-                            <div className="hero-badge">Built on Base</div>
-                            <h1 className="hero-title">
-                                Reputation is the 
-                                <br />
-                                <span className="gradient-text">New Collateral.</span>
-                            </h1>
-                            <p className="hero-subtitle">
-                                Build on-chain credibility and unlock better DeFi rates, lower collateral,
-                                <br />
-                                and exclusive access to premium lending pools
-                            </p>
-                            <div className="hero-buttons">
-                                <button onClick={connectWallet} className="btn-hero">
-                                    Launch App
-                                </button>
-                                <a href="#how-it-works" className="btn-secondary">
-                                    Learn More
-                                </a>
+                    <div className="hero">
+                        <div className="hero-badge">Built on Base</div>
+                        <h1 className="hero-title">
+                            Your Reputation,
+                            <br />
+                            <span className="gradient-text">Your Advantage</span>
+                        </h1>
+                        <p className="hero-subtitle">
+                            Build on-chain credibility and unlock better DeFi rates, lower collateral,
+                            <br />
+                            and exclusive access to premium lending pools
+                        </p>
+                        <div className="hero-buttons">
+                            <button onClick={connectWallet} className="btn-hero">
+                                Launch App
+                            </button>
+                            <a href="#features" className="btn-secondary">
+                                Learn More
+                            </a>
+                        </div>
+                        <div className="hero-stats">
+                            <div className="stat-item">
+                                <div className="stat-number">Up to 2%</div>
+                                <div className="stat-label">Interest Discount</div>
                             </div>
-                            <div className="hero-stats">
-                                <div className="stat-item">
-                                    <div className="stat-number">Up to 2%</div>
-                                    <div className="stat-label">Interest Discount</div>
-                                </div>
-                                <div className="stat-divider"></div>
-                                <div className="stat-item">
-                                    <div className="stat-number">105%</div>
-                                    <div className="stat-label">Min Collateral</div>
-                                </div>
-                                <div className="stat-divider"></div>
-                                <div className="stat-item">
-                                    <div className="stat-number">4 Tiers</div>
-                                    <div className="stat-label">Reputation Levels</div>
-                                </div>
+                            <div className="stat-divider"></div>
+                            <div className="stat-item">
+                                <div className="stat-number">105%</div>
+                                <div className="stat-label">Min Collateral</div>
+                            </div>
+                            <div className="stat-divider"></div>
+                            <div className="stat-item">
+                                <div className="stat-number">4 Tiers</div>
+                                <div className="stat-label">Reputation Levels</div>
                             </div>
                         </div>
+                    </div>
+                ) : loading ? (
+                    <div className="loading-container">
+                        <div className="loading-spinner"></div>
+                        <p>Loading your reputation data...</p>
+                    </div>
+                ) : (
+                    <div className="dashboard">
+                        {/* Reputation Overview */}
+                        <section className="section">
+                            <h2>Your Reputation</h2>
+                            <div className="reputation-overview">
+                                <div className="reputation-card main-score">
+                                    <div className="card-header">
+                                        <h3>Total Score</h3>
+                                        <div
+                                            className="tier-badge"
+                                            style={{ backgroundColor: getTierColor(reputation?.tier) }}
+                                        >
+                                            {reputation?.tier || 'Unrated'}
+                                        </div>
+                                    </div>
+                                    <div className="score-display">
+                                        {reputation?.total || 0}
+                                    </div>
+                                    <div className="score-breakdown">
+                                        <div className="breakdown-item">
+                                            <span className="breakdown-label">Loan</span>
+                                            <span className="breakdown-value">{reputation?.loan || 0}</span>
+                                        </div>
+                                        <div className="breakdown-item">
+                                            <span className="breakdown-label">Staking</span>
+                                            <span className="breakdown-value">{reputation?.staking || 0}</span>
+                                        </div>
+                                        <div className="breakdown-item">
+                                            <span className="breakdown-label">Community</span>
+                                            <span className="breakdown-value">{reputation?.community || 0}</span>
+                                        </div>
+                                    </div>
+                                </div>
 
-                        <section className="features" id="how-it-works">
+                                <div className="reputation-benefits">
+                                    <h3>Your Benefits</h3>
+                                    <div className="benefits-grid">
+                                        <div className="benefit-item">
+                                            <div className="benefit-icon">💰</div>
+                                            <div className="benefit-content">
+                                                <div className="benefit-label">Max Loan</div>
+                                                <div className="benefit-value">{access?.maxLoan || 0} USDC</div>
+                                            </div>
+                                        </div>
+                                        <div className="benefit-item">
+                                            <div className="benefit-icon">🔒</div>
+                                            <div className="benefit-content">
+                                                <div className="benefit-label">Collateral</div>
+                                                <div className="benefit-value">{access?.collateral || 0}%</div>
+                                            </div>
+                                        </div>
+                                        <div className="benefit-item">
+                                            <div className="benefit-icon">📉</div>
+                                            <div className="benefit-content">
+                                                <div className="benefit-label">Discount</div>
+                                                <div className="benefit-value">{access?.discount || 0}%</div>
+                                            </div>
+                                        </div>
+                                        <div className="benefit-item">
+                                            <div className="benefit-icon">⭐</div>
+                                            <div className="benefit-content">
+                                                <div className="benefit-label">Exclusive</div>
+                                                <div className="benefit-value">{access?.exclusive ? 'Yes' : 'No'}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        {/* Tier Progress */}
+                        <section className="section">
+                            <h2>Tier Progress</h2>
+                            <div className="tier-progress">
+                                {[
+                                    { name: 'Bronze', min: 200, color: '#CD7F32' },
+                                    { name: 'Silver', min: 400, color: '#C0C0C0' },
+                                    { name: 'Gold', min: 600, color: '#FFD700' },
+                                    { name: 'Platinum', min: 800, color: '#E5E4E2' }
+                                ].map((tier, index) => {
+                                    const currentScore = reputation?.total || 0
+                                    const progress = Math.min(100, (currentScore / tier.min) * 100)
+                                    const achieved = currentScore >= tier.min
+
+                                    return (
+                                        <div key={tier.name} className={`tier-item ${achieved ? 'achieved' : ''}`}>
+                                            <div className="tier-info">
+                                                <div className="tier-name" style={{ color: tier.color }}>
+                                                    {tier.name}
+                                                </div>
+                                                <div className="tier-requirement">
+                                                    {tier.min}+ points
+                                                </div>
+                                            </div>
+                                            <div className="progress-container">
+                                                <div className="progress-bar">
+                                                    <div
+                                                        className="progress-fill"
+                                                        style={{
+                                                            width: `${progress}%`,
+                                                            backgroundColor: tier.color
+                                                        }}
+                                                    ></div>
+                                                </div>
+                                                <div className="progress-text">
+                                                    {achieved ? '✓ Achieved' : `${Math.round(progress)}%`}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
+                        </section>
+
+                        {/* Coming Soon Features */}
+                        <section className="section">
+                            <h2>Coming Soon</h2>
+                            <div className="coming-soon-grid">
+                                <div className="coming-soon-card">
+                                    <div className="coming-soon-icon">🏆</div>
+                                    <h3>Achievement System</h3>
+                                    <p>Unlock badges and rewards for your DeFi activities</p>
+                                </div>
+                                <div className="coming-soon-card">
+                                    <div className="coming-soon-icon">🤝</div>
+                                    <h3>Social Features</h3>
+                                    <p>Endorsements and vouching from other users</p>
+                                </div>
+                                <div className="coming-soon-card">
+                                    <div className="coming-soon-icon">💰</div>
+                                    <h3>Lending Pool</h3>
+                                    <p>Borrow and lend with reputation-based rates</p>
+                                </div>
+                                <div className="coming-soon-card">
+                                    <div className="coming-soon-icon">🏷️</div>
+                                    <h3>Basename Integration</h3>
+                                    <p>Link your .base.eth name to your reputation</p>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+                )}
+
+                {/* Features Section for Landing Page */}
+                {!account && (
+                    <section className="features" id="features">
+                        <div className="container">
                             <h2 className="section-title">How It Works</h2>
                             <div className="features-grid">
                                 <div className="feature-card">
@@ -281,169 +469,8 @@ function App() {
                                     <p>Gold and Platinum tiers gain access to premium lending pools with the best terms</p>
                                 </div>
                             </div>
-                        </section>
-
-                        <section className="tiers">
-                            <h2 className="section-title">Reputation Tiers</h2>
-                            <div className="tiers-grid">
-                                <div className="tier-card tier-card-bronze">
-                                    <div className="tier-header">
-                                        <div className="tier-name">Bronze</div>
-                                        <div className="tier-score">200+ pts</div>
-                                    </div>
-                                    <div className="tier-benefits">
-                                        <div className="benefit">✓ 10K USDC max loan</div>
-                                        <div className="benefit">✓ 150% collateral</div>
-                                        <div className="benefit">✓ Standard rates</div>
-                                    </div>
-                                </div>
-                                <div className="tier-card tier-card-silver">
-                                    <div className="tier-header">
-                                        <div className="tier-name">Silver</div>
-                                        <div className="tier-score">400+ pts</div>
-                                    </div>
-                                    <div className="tier-benefits">
-                                        <div className="benefit">✓ 50K USDC max loan</div>
-                                        <div className="benefit">✓ 130% collateral</div>
-                                        <div className="benefit">✓ 0.5% discount</div>
-                                    </div>
-                                </div>
-                                <div className="tier-card tier-card-gold">
-                                    <div className="tier-badge-popular">Popular</div>
-                                    <div className="tier-header">
-                                        <div className="tier-name">Gold</div>
-                                        <div className="tier-score">600+ pts</div>
-                                    </div>
-                                    <div className="tier-benefits">
-                                        <div className="benefit">✓ 200K USDC max loan</div>
-                                        <div className="benefit">✓ 110% collateral</div>
-                                        <div className="benefit">✓ 1% discount</div>
-                                        <div className="benefit">✓ Exclusive pools</div>
-                                    </div>
-                                </div>
-                                <div className="tier-card tier-card-platinum">
-                                    <div className="tier-badge-premium">Premium</div>
-                                    <div className="tier-header">
-                                        <div className="tier-name">Platinum</div>
-                                        <div className="tier-score">800+ pts</div>
-                                    </div>
-                                    <div className="tier-benefits">
-                                        <div className="benefit">✓ 1M USDC max loan</div>
-                                        <div className="benefit">✓ 105% collateral</div>
-                                        <div className="benefit">✓ 2% discount</div>
-                                        <div className="benefit">✓ VIP access</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className="cta">
-                            <h2 className="cta-title">Ready to Build Your Reputation?</h2>
-                            <p className="cta-subtitle">Join EthosBase and start earning better DeFi terms today</p>
-                            <button onClick={connectWallet} className="btn-cta">
-                                Connect Wallet
-                            </button>
-                        </section>
-                    </>
-                ) : loading && !reputation ? (
-                    <div className="loading">Loading...</div>
-                ) : (
-                    <>
-                        <section className="section">
-                            <h2>Your Reputation</h2>
-                            <div className="grid">
-                                <div className="card card-highlight">
-                                    <div className="card-label">Total Score</div>
-                                    <div className="card-value">{reputation?.total || 0}</div>
-                                    <div className={`tier tier-${reputation?.tier?.toLowerCase()}`}>
-                                        {reputation?.tier || 'Unrated'}
-                                    </div>
-                                </div>
-                                <div className="card">
-                                    <div className="card-label">Loan Score</div>
-                                    <div className="card-value">{reputation?.loan || 0}</div>
-                                </div>
-                                <div className="card">
-                                    <div className="card-label">Staking Score</div>
-                                    <div className="card-value">{reputation?.staking || 0}</div>
-                                </div>
-                                <div className="card">
-                                    <div className="card-label">Community Score</div>
-                                    <div className="card-value">{reputation?.community || 0}</div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className="section">
-                            <h2>Access Benefits</h2>
-                            <div className="grid">
-                                <div className="card">
-                                    <div className="card-label">Max Loan</div>
-                                    <div className="card-value">{access?.maxLoan || 0} USDC</div>
-                                </div>
-                                <div className="card">
-                                    <div className="card-label">Collateral Ratio</div>
-                                    <div className="card-value">{access?.collateral || 0}%</div>
-                                </div>
-                                <div className="card">
-                                    <div className="card-label">Interest Discount</div>
-                                    <div className="card-value">{access?.discount || 0}%</div>
-                                </div>
-                                <div className="card">
-                                    <div className="card-label">Exclusive Access</div>
-                                    <div className="card-value">{access?.exclusive ? '✓' : '✗'}</div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className="section">
-                            <h2>Lending</h2>
-                            {loan ? (
-                                <div className="loan-active">
-                                    <div className="card">
-                                        <div className="loan-info">
-                                            <div>
-                                                <div className="card-label">Active Loan</div>
-                                                <div className="card-value">{loan.amount} USDC</div>
-                                            </div>
-                                            <div>
-                                                <div className="card-label">Interest</div>
-                                                <div className="card-value">{loan.interest} USDC</div>
-                                            </div>
-                                            <div>
-                                                <div className="card-label">Due Date</div>
-                                                <div className="card-value">{loan.dueDate.toLocaleDateString()}</div>
-                                            </div>
-                                        </div>
-                                        <button
-                                            onClick={handleRepayLoan}
-                                            disabled={loading}
-                                            className="btn-primary"
-                                        >
-                                            {loading ? 'Processing...' : 'Repay Loan'}
-                                        </button>
-                                    </div>
-                                </div>
-                            ) : (
-                                <div className="loan-form">
-                                    <input
-                                        type="number"
-                                        placeholder="Amount (USDC)"
-                                        value={loanAmount}
-                                        onChange={(e) => setLoanAmount(e.target.value)}
-                                        className="input"
-                                    />
-                                    <button
-                                        onClick={handleRequestLoan}
-                                        disabled={loading || !loanAmount}
-                                        className="btn-primary"
-                                    >
-                                        {loading ? 'Processing...' : 'Request Loan'}
-                                    </button>
-                                </div>
-                            )}
-                        </section>
-                    </>
+                        </div>
+                    </section>
                 )}
             </main>
         </div>

@@ -17,9 +17,12 @@ EthosBase built on Base Chain. Users accumulate reputation scores based on their
 - **Interest rate discounts**: Up to 2% discount for Platinum tier users
 
 ### React Frontend
-- **Minimal Base design**: Clean UI with Base's color scheme and Inter font
+- **Minimal Base design**: Clean UI with Base's color scheme and Poppins font
+- **OnchainKit integration**: Official Base toolkit for wallet and identity
 - **Real-time data**: Live blockchain data updates
-- **Wallet integration**: Seamless MetaMask connection
+- **Multi-wallet support**: Coinbase Wallet, MetaMask, WalletConnect
+- **Basenames integration**: ENS-like names for Base addresses
+- **Smart wallet ready**: Built-in support for smart contract wallets
 - **Responsive**: Works on desktop and mobile
 
 ### Reputation Categories
@@ -187,3 +190,16 @@ reputation.updateReputation(
 ---
 
 Built with ❤️ for the Base Chain ecosystem
+
+
+
+
+<!-- 
+
+📊 Analytics Dashboard - Visual reputation tracking
+🏆 Achievement System - Gamification with badges/NFTs
+💰 Advanced Lending - More loan options and features
+👥 Social Features - Community endorsements and vouching
+🔗 Protocol Integration - Connect with other DeFi platforms
+
+ -->

@@ -22,6 +22,9 @@
     "check-my-reputation": "hardhat run scripts/check-my-reputation.js --network baseSepolia",
     "reach-bronze": "hardhat run scripts/reach-bronze.js --network baseSepolia",
     "verify-deployment": "hardhat run scripts/verify-deployment.js --network baseSepolia",
+    "add-liquidity": "hardhat run scripts/add-liquidity.js --network baseSepolia",
+    "debug-loan": "hardhat run scripts/debug-loan.js --network baseSepolia",
+    "prepare-loan": "hardhat run scripts/prepare-loan.js --network baseSepolia",
     "node": "hardhat node",
     "frontend": "cd frontend && npm run dev",
     "frontend:build": "cd frontend && npm run build"
