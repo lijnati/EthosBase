@@ -1,0 +1,10 @@
+<svg width="240" height="48" viewBox="0 0 240 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .ethos-text { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 28px; }
+      .base-text { font-family: 'Poppins', sans-serif; font-weight: 700; font-size: 28px; }
+    </style>
+  </defs>
+  <text x="0" y="32" class="ethos-text" fill="#0052FF">ETHOS</text>
+  <text x="120" y="32" class="base-text" fill="#0A0B0D">BASE</text>
+</svg>

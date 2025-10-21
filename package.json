@@ -1,0 +1,37 @@
+{
+  "name": "defi-reputation-system",
+  "version": "1.0.0",
+  "description": "On-chain reputation and social credit system for DeFi access on Base Chain",
+  "main": "index.js",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "deploy": "hardhat run scripts/deploy.js --network base",
+    "deploy:sepolia": "hardhat run scripts/deploy.js --network baseSepolia",
+    "deploy:local": "hardhat run scripts/deploy-local.js --network localhost",
+    "check-balance": "hardhat run scripts/check-balance.js --network baseSepolia",
+    "mint-tokens": "hardhat run scripts/mint-tokens.js --network baseSepolia",
+    "mint-tokens:backup": "hardhat run scripts/mint-tokens.js --network baseSepoliaBackup",
+    "mint-tokens:alchemy": "hardhat run scripts/mint-tokens.js --network baseSepoliaAlchemy",
+    "test-network": "hardhat run scripts/test-network.js --network baseSepolia",
+    "simple-mint": "hardhat run scripts/simple-mint.js --network baseSepolia",
+    "mint-weth-only": "hardhat run scripts/mint-weth-only.js --network baseSepolia",
+    "check-balances": "hardhat run scripts/check-balances.js --network baseSepolia",
+    "boost-reputation": "hardhat run scripts/boost-reputation.js --network baseSepolia",
+    "check-authorization": "hardhat run scripts/check-authorization.js --network baseSepolia",
+    "check-my-reputation": "hardhat run scripts/check-my-reputation.js --network baseSepolia",
+    "reach-bronze": "hardhat run scripts/reach-bronze.js --network baseSepolia",
+    "verify-deployment": "hardhat run scripts/verify-deployment.js --network baseSepolia",
+    "node": "hardhat node",
+    "frontend": "cd frontend && npm run dev",
+    "frontend:build": "cd frontend && npm run build"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^4.0.0",
+    "hardhat": "^2.19.0"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.0.0",
+    "dotenv": "^16.3.1"
+  }
+}
