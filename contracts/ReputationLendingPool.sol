@@ -187,4 +187,5 @@ contract ReputationLendingPool is Ownable, ReentrancyGuard {
             calculateInterest(borrower)
         );
     }
+    
 }

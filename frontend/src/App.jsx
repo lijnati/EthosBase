@@ -281,6 +281,21 @@ function App() {
                                 Learn More
                             </a>
                         </div>
+                        
+                        <div className="hero-features">
+                            <div className="feature-highlight">
+                                <span className="feature-icon">🏷️</span>
+                                <span className="feature-text">Basename Integration</span>
+                            </div>
+                            <div className="feature-highlight">
+                                <span className="feature-icon">🎯</span>
+                                <span className="feature-text">Base Account Benefits</span>
+                            </div>
+                            <div className="feature-highlight">
+                                <span className="feature-icon">🌐</span>
+                                <span className="feature-text">Ecosystem Wide</span>
+                            </div>
+                        </div>
                         <div className="hero-stats">
                             <div className="stat-item">
                                 <div className="stat-number">Up to 2%</div>
@@ -418,6 +433,37 @@ function App() {
                             </div>
                         </section>
 
+                        {/* Base Account Integration */}
+                        <section className="section">
+                            <h2>Base Account & Basename</h2>
+                            <div className="base-integration-grid">
+                                <div className="integration-card">
+                                    <div className="integration-icon">🏷️</div>
+                                    <h3>Basename Integration</h3>
+                                    <p>Your .base.eth name is now linked to your reputation</p>
+                                    <div className="integration-status active">
+                                        <span>✓ Active</span>
+                                    </div>
+                                </div>
+                                <div className="integration-card">
+                                    <div className="integration-icon">🎯</div>
+                                    <h3>Identity Verification</h3>
+                                    <p>Enhanced profile verification through Base ecosystem</p>
+                                    <div className="integration-status active">
+                                        <span>✓ Active</span>
+                                    </div>
+                                </div>
+                                <div className="integration-card">
+                                    <div className="integration-icon">🌐</div>
+                                    <h3>Ecosystem Benefits</h3>
+                                    <p>Use your reputation across all Base DeFi protocols</p>
+                                    <div className="integration-status active">
+                                        <span>✓ Active</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
                         {/* Coming Soon Features */}
                         <section className="section">
                             <h2>Coming Soon</h2>
@@ -438,9 +484,9 @@ function App() {
                                     <p>Borrow and lend with reputation-based rates</p>
                                 </div>
                                 <div className="coming-soon-card">
-                                    <div className="coming-soon-icon">🏷️</div>
-                                    <h3>Basename Integration</h3>
-                                    <p>Link your .base.eth name to your reputation</p>
+                                    <div className="coming-soon-icon">🔗</div>
+                                    <h3>Cross-Chain Reputation</h3>
+                                    <p>Extend your reputation across multiple networks</p>
                                 </div>
                             </div>
                         </section>

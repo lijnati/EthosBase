@@ -1,4 +1,11 @@
+import { useAccount, useChainId } from 'wagmi'
+import { useBasename } from '../hooks/useBasename'
+import { BasenameCard } from './BasenameManager'
+
 export function ReputationSummary({ reputation, access }) {
+  const { address } = useAccount()
+  const chainId = useChainId()
+  const { basename } = useBasename(address, chainId)
   const getScoreColor = (score) => {
     if (score >= 800) return '#E5E4E2' // Platinum
     if (score >= 600) return '#FFD700' // Gold
@@ -24,7 +31,14 @@ export function ReputationSummary({ reputation, access }) {
       <div className="summary-grid">
         <div className="summary-card summary-main">
           <div className="summary-header">
-            <h3>Your Reputation</h3>
+            <div className="header-left">
+              <h3>Your Reputation</h3>
+              {basename && (
+                <div className="user-basename-display">
+                  <BasenameCard address={address} showActions={true} />
+                </div>
+              )}
+            </div>
             <div className="tier-badge-large" style={{ backgroundColor: scoreColor }}>
               {reputation?.tier || 'Unrated'}
             </div>
