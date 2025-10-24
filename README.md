@@ -43,6 +43,9 @@ EthosBase built on Base Chain. Users accumulate reputation scores based on their
 | Community | 20% | Governance participation, contributions |
 | Flash Loans | 15% | Proper usage vs abuse |
 
+
+
+![Screenshot](./reputation-ss.png)
 <!-- ## 🏗️ Architecture
 
 ```
