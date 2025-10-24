@@ -1,15 +1,15 @@
-# 🎯 EthosBase - Base Testnet Submission
+# EthosBase - Base Testnet Submission
 
-## 📋 Submission Summary
+##  Submission Summary
 
 **Project**: EthosBase - DeFi Reputation System  
 **Network**: Base Sepolia Testnet (Chain ID: 84532)  
 **Submission Date**: December 2024  
-**Status**: ✅ COMPLETE - Deployed & Transacting
+**Status**: COMPLETE - Deployed & Transacting
 
-## 🏆 Proof of Deployment
+## Proof of Deployment
 
-### ✅ All Core Contracts Deployed & Verified
+###  All Core Contracts Deployed & Verified
 
 | Contract | Address | Status |
 |----------|---------|--------|
@@ -19,23 +19,23 @@
 | Mock USDC | `0x71C7b5ba984A5f1011c1196a56a8130A8DB40e5E` | ✅ Active |
 | Mock WETH | `0x30C13770b937F38F77371Bef884Af08a721880636` | ✅ Active |
 
-## 🚀 Proof of Transactions (1+ Required)
+##  Proof of Transactions (1+ Required)
 
-### ✅ Transaction #1: USDC Token Minting
+###  Transaction #1: USDC Token Minting
 - **Hash**: `0x5967bbff5868f0edc65920a97b15b829a434a351731c813ab71d07fac5e8c51c`
 - **Explorer**: [View on BaseScan](https://sepolia.basescan.org/tx/0x5967bbff5868f0edc65920a97b15b829a434a351731c813ab71d07fac5e8c51c)
 - **Type**: ERC20 Token Mint
-- **Status**: ✅ Confirmed
+- **Status**: Confirmed
 
-### ✅ Transaction #2: Lending Pool Deposit
+###  Transaction #2: Lending Pool Deposit
 - **Amount**: 100,000 USDC deposited
 - **Pool Address**: `0xD1abe9A4288A7880AD75b6b353c4EA65B220adC7`
-- **Status**: ✅ Confirmed (visible in pool balance)
+- **Status**:  Confirmed (visible in pool balance)
 
-### ✅ Transaction #3: Reputation System Initialization
+###  Transaction #3: Reputation System Initialization
 - **User Reputation**: Score 200 (Bronze Tier)
 - **Access Level**: 10,000 USDC max loan, 150% collateral
-- **Status**: ✅ Active & Functional
+- **Status**:  Active & Functional
 
 <!-- ## 🔧 System Functionality Verified
 

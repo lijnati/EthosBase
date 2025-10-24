@@ -1,13 +1,13 @@
-# 🎯 EthosBase - Proof of Deployment & Transactions
+#  EthosBase - Proof of Deployment & Transactions
 
-## 📋 Deployment Summary
+## Deployment Summary
 
 **Network**: Base Sepolia Testnet  
 **Chain ID**: 84532  
 **Deployment Date**: December 2024  
 **Deployer Address**: `0xdB3E14879897939cCFD0B22Da16f178463aE6020`
 
-## 🏗️ Deployed Contracts
+## Deployed Contracts
 
 ### Core System Contracts
 
@@ -56,7 +56,7 @@
 All deployment transactions can be viewed on Base Sepolia explorer using the contract addresses above. -->
 
 ### Confirmed Test Transactions
-✅ **USDC Minting Transaction**: `0x5967bbff5868f0edc65920a97b15b829a434a351731c813ab71d07fac5e8c51c`
+**USDC Minting Transaction**: `0x5967bbff5868f0edc65920a97b15b829a434a351731c813ab71d07fac5e8c51c`
 - [View on BaseScan](https://sepolia.basescan.org/tx/0x5967bbff5868f0edc65920a97b15b829a434a351731c813ab71d07fac5e8c51c)
 - Successfully minted test USDC tokens
 - Gas used: ~0.001 ETH
