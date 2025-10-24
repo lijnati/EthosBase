@@ -4,7 +4,7 @@ EthosBase built on Base Chain. Users accumulate reputation scores based on their
 
 
 <!-- Add video from YouTube-->
-[![YouTube Video Thumbnail](https://img.youtube.com/vi/mlEtiUaok_o/0.jpg)](https://www.youtube.com/watch?v=mlEtiUaok_o)
+[![Meet EthosBase](https://img.youtube.com/vi/mlEtiUaok_o/0.jpg)](https://www.youtube.com/watch?v=mlEtiUaok_o)
 <!-- ![Screenshot](./screenshot.png) -->
 ## Features
 
