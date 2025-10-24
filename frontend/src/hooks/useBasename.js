@@ -1,53 +1,119 @@
 import { useState, useEffect } from 'react'
-import { reverseResolveAddress, resolveBasename } from '../utils/basenames'
+import { resolveBasename } from '../utils/basename'
 
-export function useBasename(address, chainId) {
+/**
+ * Hook to resolve and manage Basename for an address
+ * @param {string} address - Ethereum address to resolve
+ * @param {object} provider - Ethers provider
+ * @returns {object} - { basename, loading, error }
+ */
+export function useBasename(address, provider) {
   const [basename, setBasename] = useState(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
   useEffect(() => {
-    if (!address || !chainId) return
+    if (!address || !provider) {
+      setBasename(null)
+      setLoading(false)
+      setError(null)
+      return
+    }
 
-    const fetchBasename = async () => {
+    let cancelled = false
+    
+    const resolve = async () => {
       setLoading(true)
       setError(null)
       
       try {
-        const resolvedBasename = await reverseResolveAddress(address, chainId)
-        setBasename(resolvedBasename)
+        const result = await resolveBasename(address, provider)
+        
+        if (!cancelled) {
+          setBasename(result)
+        }
       } catch (err) {
-        setError(err.message)
-        console.error('Error fetching basename:', err)
+        if (!cancelled) {
+          setError(err.message)
+          setBasename(null)
+        }
       } finally {
-        setLoading(false)
+        if (!cancelled) {
+          setLoading(false)
+        }
       }
     }
 
-    fetchBasename()
-  }, [address, chainId])
+    resolve()
+
+    return () => {
+      cancelled = true
+    }
+  }, [address, provider])
 
   return { basename, loading, error }
 }
 
-export function useBasenameResolver() {
+/**
+ * Hook to resolve multiple addresses to Basenames
+ * @param {string[]} addresses - Array of addresses to resolve
+ * @param {object} provider - Ethers provider
+ * @returns {object} - { basenames: Map, loading, error }
+ */
+export function useBasenames(addresses, provider) {
+  const [basenames, setBasenames] = useState(new Map())
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState(null)
 
-  const resolveAddress = async (basename, chainId) => {
-    setLoading(true)
-    setError(null)
-    
-    try {
-      const address = await resolveBasename(basename, chainId)
-      return address
-    } catch (err) {
-      setError(err.message)
-      throw err
-    } finally {
+  useEffect(() => {
+    if (!addresses?.length || !provider) {
+      setBasenames(new Map())
       setLoading(false)
+      setError(null)
+      return
     }
-  }
 
-  return { resolveAddress, loading, error }
+    let cancelled = false
+    
+    const resolveAll = async () => {
+      setLoading(true)
+      setError(null)
+      
+      try {
+        const results = await Promise.allSettled(
+          addresses.map(async (address) => {
+            const basename = await resolveBasename(address, provider)
+            return { address, basename }
+          })
+        )
+
+        if (!cancelled) {
+          const basenameMap = new Map()
+          results.forEach((result) => {
+            if (result.status === 'fulfilled') {
+              basenameMap.set(result.value.address, result.value.basename)
+            }
+          })
+          setBasenames(basenameMap)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err.message)
+          setBasenames(new Map())
+        }
+      } finally {
+        if (!cancelled) {
+          setLoading(false)
+        }
+      }
+    }
+
+    resolveAll()
+
+    return () => {
+      cancelled = true
+    }
+  }, [addresses, provider])
+
+  return { basenames, loading, error }
 }

@@ -35,6 +35,7 @@ contract ReputationSystem is Ownable, ReentrancyGuard {
     mapping(address => UserReputation) public userReputations;
     mapping(address => ReputationAction[]) public userActions;
     mapping(address => bool) public authorizedScorers;
+    mapping(address => string) public userBasenames;
     
     uint256 public constant MAX_SCORE = 1000;
     uint256 public constant MIN_SCORE = 0;
@@ -50,6 +51,7 @@ contract ReputationSystem is Ownable, ReentrancyGuard {
     
     event ScorerAuthorized(address indexed scorer);
     event ScorerRevoked(address indexed scorer);
+    event BasenameUpdated(address indexed user, string basename);
 
     constructor() Ownable(msg.sender) {}
 
@@ -198,5 +200,14 @@ function updateReputation(
         if (score >= 400) return "Silver";
         if (score >= 200) return "Bronze";
         return "Unrated";
+    }
+
+    function setBasename(string calldata basename) external {
+        userBasenames[msg.sender] = basename;
+        emit BasenameUpdated(msg.sender, basename);
+    }
+
+    function getUserBasename(address user) external view returns (string memory) {
+        return userBasenames[user];
     }
 }

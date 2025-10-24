@@ -21,9 +21,16 @@ EthosBase built on Base Chain. Users accumulate reputation scores based on their
 - **OnchainKit integration**: Official Base toolkit for wallet and identity
 - **Real-time data**: Live blockchain data updates
 - **Multi-wallet support**: Coinbase Wallet, MetaMask, WalletConnect
-- **Basenames integration**: ENS-like names for Base addresses
+- **Basenames integration**: ENS-like names for Base addresses with management UI
 - **Smart wallet ready**: Built-in support for smart contract wallets
 - **Responsive**: Works on desktop and mobile
+
+### Basename Integration
+- **Address Resolution**: Automatically resolves .base.eth names to addresses
+- **Profile Enhancement**: Display Basenames instead of hex addresses
+- **On-chain Storage**: Link Basenames to reputation profiles in smart contracts
+- **Management Interface**: Easy-to-use UI for setting and updating Basenames
+- **Cross-protocol Benefits**: Basename-enhanced reputation works across all integrated DeFi protocols
 
 ### Reputation Categories
 
