@@ -3,7 +3,9 @@
 EthosBase built on Base Chain. Users accumulate reputation scores based on their behavior, which unlocks better rates, lower collateral requirements, and access to exclusive pools.
 
 
-![Screenshot](./screenshot.png)
+<!-- Add video from YouTube-->
+<iframe width="560" height="315" src="https://www.youtube.com/watch?v=mlEtiUaok_o" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+<!-- ![Screenshot](./screenshot.png) -->
 ## Features
 
 ### Core Reputation System
@@ -44,8 +46,6 @@ EthosBase built on Base Chain. Users accumulate reputation scores based on their
 | Flash Loans | 15% | Proper usage vs abuse |
 
 
-
-![Screenshot](./reputation-ss.png)
 <!-- ## 🏗️ Architecture
 
 ```
