@@ -2,6 +2,8 @@
 
 EthosBase built on Base Chain. Users accumulate reputation scores based on their behavior, which unlocks better rates, lower collateral requirements, and access to exclusive pools.
 
+
+![Screenshot](./screenshot.png)
 ## Features
 
 ### Core Reputation System
